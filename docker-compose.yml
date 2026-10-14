@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: ailian-postgres
+    environment:
+      POSTGRES_USER: ailian
+      POSTGRES_PASSWORD: ailian
+      POSTGRES_DB: ailian
+    ports:
+      - "5433:5432"
+    volumes:
+      - ailian_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ailian -d ailian"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ailian_postgres_data:

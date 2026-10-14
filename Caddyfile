@@ -1,0 +1,9 @@
+test-api.ailian.help {
+  encode zstd gzip
+  reverse_proxy app:3000
+
+  log {
+    output stdout
+    format console
+  }
+}
