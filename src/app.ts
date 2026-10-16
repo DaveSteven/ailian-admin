@@ -1,6 +1,9 @@
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import Fastify, { type FastifyInstance } from 'fastify';
+import fastifyStatic from '@fastify/static';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { env } from './config/env.js';
 import { registerErrorHandlers } from './plugins/error-handler.js';
 import { registerApiV1Routes } from './routes/api-v1.routes.js';
@@ -30,6 +33,16 @@ export async function createApp(): Promise<FastifyInstance> {
   await app.register(registerApiV1Routes, {
     prefix: '/api/v1',
   });
+
+  const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
+  await app.register(fastifyStatic, {
+    root: path.resolve(currentDirectory, '../../admin-dist'),
+    prefix: '/admin/',
+    wildcard: false,
+  });
+
+  app.get('/admin', async (_request, reply) => reply.redirect('/admin/'));
+  app.get('/admin/*', async (_request, reply) => reply.sendFile('index.html'));
 
   return app;
 }

@@ -4,6 +4,7 @@ import { registerAuthRoutes } from './auth.routes.js';
 import { registerMerchantsRoutes } from './merchants.routes.js';
 import { registerServicesRoutes } from './services.routes.js';
 import { registerUploadsRoutes } from './uploads.routes.js';
+import { registerAdminRoutes } from './admin.routes.js';
 
 export async function registerApiV1Routes(app: FastifyInstance) {
   app.get('/', async () => ({
@@ -29,5 +30,9 @@ export async function registerApiV1Routes(app: FastifyInstance) {
 
   await app.register(registerUploadsRoutes, {
     prefix: '/uploads',
+  });
+
+  await app.register(registerAdminRoutes, {
+    prefix: '/admin',
   });
 }

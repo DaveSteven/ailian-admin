@@ -22,6 +22,11 @@ type MerchantDetailRow = {
   verified: boolean;
   rating: string | null;
   note: string | null;
+  source: string;
+  review_status: 'pending' | 'approved' | 'rejected';
+  created_at: Date;
+  updated_at: Date;
+  staff_name: string | null;
 };
 
 type MerchantServiceRow = {
@@ -76,8 +81,14 @@ export async function getMerchantDetail(id: string) {
         m.verified,
         m.rating,
         m.note
+        ,m.source
+        ,m.review_status
+        ,m.created_at
+        ,m.updated_at
+        ,su.name AS staff_name
       FROM merchants m
       LEFT JOIN service_categories sc ON sc.id = m.primary_category_id
+      LEFT JOIN staff_users su ON su.id = m.created_by_staff_id
       WHERE m.id = $1
       LIMIT 1
     `,
@@ -152,6 +163,11 @@ export async function getMerchantDetail(id: string) {
     verified: merchant.verified,
     rating: merchant.rating ? Number(merchant.rating) : null,
     note: merchant.note,
+    source: merchant.source,
+    reviewStatus: merchant.review_status,
+    staffName: merchant.staff_name,
+    createdAt: merchant.created_at,
+    updatedAt: merchant.updated_at,
     contacts: contactsResult.rows.map((contact) => ({
       id: contact.id,
       name: contact.name,

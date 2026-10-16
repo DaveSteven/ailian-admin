@@ -1,5 +1,8 @@
 node_modules/
 dist/
+admin-dist/
+admin/node_modules/
+admin/*.tsbuildinfo
 /uploads/
 coverage/
 .env

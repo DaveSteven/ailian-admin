@@ -18,6 +18,9 @@ type Env = {
   OSS_ROLE_NAME: string;
   OSS_UPLOAD_PREFIX: string;
   OSS_SIGNED_URL_SECONDS: number;
+  ADMIN_USERNAME: string;
+  ADMIN_PASSWORD: string;
+  ADMIN_TOKEN_SECRET: string;
 };
 
 const DEFAULT_PORT = 3000;
@@ -41,6 +44,9 @@ export const env: Env = {
   OSS_ROLE_NAME: process.env.OSS_ROLE_NAME || 'AilianMerchantMediaEcsRole',
   OSS_UPLOAD_PREFIX: process.env.OSS_UPLOAD_PREFIX || 'merchant-media',
   OSS_SIGNED_URL_SECONDS: parsePositiveInteger(process.env.OSS_SIGNED_URL_SECONDS, 600),
+  ADMIN_USERNAME: process.env.ADMIN_USERNAME || 'admin',
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || '000000',
+  ADMIN_TOKEN_SECRET: process.env.ADMIN_TOKEN_SECRET || 'ailian-admin-change-this-secret',
 };
 
 function parseNodeEnv(value: string | undefined): Env['NODE_ENV'] {
