@@ -1,12 +1,7 @@
 node_modules/
 dist/
-admin-dist/
-admin/node_modules/
-admin/*.tsbuildinfo
-/uploads/
-coverage/
+*.tsbuildinfo
 .env
 .env.*
 !.env.example
-!.env.test.example
 .DS_Store

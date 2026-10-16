@@ -1,35 +1,22 @@
 {
-  "name": "ailian-miniapp-server",
-  "version": "0.1.0",
+  "name": "ailian-admin",
   "private": true,
+  "version": "1.0.0",
   "type": "module",
-  "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "npm run admin:build && tsc -p tsconfig.json",
-    "admin:build": "npm --prefix admin run build",
-    "start": "node dist/src/server.js",
-    "check": "tsc -p tsconfig.json --noEmit",
-    "db:migrate": "npm run build && node dist/scripts/migrate.js",
-    "db:stats": "npm run build && node dist/scripts/db-stats.js",
-    "import:excel": "npm run build && node dist/scripts/import-excel.js",
-    "staff:add": "npm run build && node dist/scripts/add-staff.js"
-  },
+  "scripts": { "dev": "vite", "build": "tsc --noEmit -p tsconfig.json && vite build" },
   "dependencies": {
-    "@fastify/cors": "^9.0.1",
-    "@fastify/multipart": "^8.3.1",
-    "@fastify/static": "^7.0.4",
-    "ali-oss": "^6.23.0",
-    "dotenv": "^17.4.2",
-    "drizzle-orm": "^0.45.2",
-    "fastify": "^4.28.1",
-    "pg": "^8.21.0",
-    "xlsx": "^0.18.5"
+    "@reduxjs/toolkit": "^2.5.0",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.1.1"
   },
   "devDependencies": {
-    "@types/ali-oss": "^6.23.3",
-    "@types/node": "^20.14.10",
-    "@types/pg": "^8.20.0",
-    "tsx": "^4.16.2",
-    "typescript": "^5.5.3"
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
   }
 }
