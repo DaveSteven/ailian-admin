@@ -3,6 +3,7 @@ import { authenticateAdmin, requireAdmin } from '../modules/admin/admin-auth.ser
 import { getAdminOverview, listAdminMerchants, reviewMerchant } from '../modules/admin/admin-merchants.service.js';
 import { getMerchantDetail } from '../modules/merchants/merchant-detail.service.js';
 import { createAdminCategory, listAdminCategories, updateAdminCategory } from '../modules/admin/admin-categories.service.js';
+import { createAdminStaff, listAdminStaff, updateAdminStaff } from '../modules/admin/admin-staff.service.js';
 
 export async function registerAdminRoutes(app: FastifyInstance) {
   app.post<{ Body: { username?: string; password?: string } }>('/login', async (request) => ({
@@ -29,5 +30,16 @@ export async function registerAdminRoutes(app: FastifyInstance) {
   app.patch<{ Params: { id: string }; Body: { name?: string; description?: string } }>('/categories/:id', async (request) => {
     requireAdmin(request);
     return { category: await updateAdminCategory(request.params.id, request.body ?? {}) };
+  });
+  app.get('/staff', async (request) => {
+    requireAdmin(request); return { staff: await listAdminStaff() };
+  });
+  app.post<{ Body: { name?: string; phone?: string } }>('/staff', async (request, reply) => {
+    requireAdmin(request);
+    return reply.code(201).send({ staff: await createAdminStaff(request.body ?? {}) });
+  });
+  app.patch<{ Params: { id: string }; Body: { name?: string; phone?: string; active?: boolean } }>('/staff/:id', async (request) => {
+    requireAdmin(request);
+    return { staff: await updateAdminStaff(request.params.id, request.body ?? {}) };
   });
 }

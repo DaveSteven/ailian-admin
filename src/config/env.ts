@@ -11,7 +11,6 @@ type Env = {
   WECHAT_APP_ID: string;
   WECHAT_APP_SECRET: string;
   STAFF_SESSION_DAYS: number;
-  STAFF_AUTO_PROVISION: boolean;
   UPLOAD_DIR: string;
   OSS_BUCKET: string;
   OSS_REGION: string;
@@ -37,7 +36,6 @@ export const env: Env = {
   WECHAT_APP_ID: process.env.WECHAT_APP_ID || '',
   WECHAT_APP_SECRET: process.env.WECHAT_APP_SECRET || '',
   STAFF_SESSION_DAYS: parsePositiveInteger(process.env.STAFF_SESSION_DAYS, 7),
-  STAFF_AUTO_PROVISION: parseBoolean(process.env.STAFF_AUTO_PROVISION, false),
   UPLOAD_DIR: process.env.UPLOAD_DIR || './uploads',
   OSS_BUCKET: process.env.OSS_BUCKET || '',
   OSS_REGION: process.env.OSS_REGION || 'oss-cn-guangzhou',
@@ -101,12 +99,4 @@ function parsePositiveInteger(value: string | undefined, defaultValue: number): 
   }
 
   return parsed;
-}
-
-function parseBoolean(value: string | undefined, defaultValue: boolean): boolean {
-  if (!value) {
-    return defaultValue;
-  }
-
-  return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
 }

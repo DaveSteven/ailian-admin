@@ -27,7 +27,6 @@ DB_POOL_MAX=10
 WECHAT_APP_ID=你的小程序AppID
 WECHAT_APP_SECRET=你的小程序AppSecret
 STAFF_SESSION_DAYS=7
-STAFF_AUTO_PROVISION=false
 UPLOAD_DIR=./uploads
 OSS_BUCKET=ailian-merchant-media-test
 OSS_REGION=oss-cn-guangzhou
@@ -40,14 +39,15 @@ OSS_SIGNED_URL_SECONDS=600
 
 ## 地推人员权限
 
-录入页面通过 `wx.login` 验证微信身份。未加入白名单的账号会在页面上看到该小程序范围内的账号标识，管理员可使用它添加地推人员：
+管理员可在管理后台的“地推白名单”菜单预先添加姓名和手机号。地推人员首次登录时需主动授权微信手机号；服务端匹配白名单后绑定该微信账号，后续在会话有效期内无需重复授权。
+
+也可以通过命令行添加：
 
 ```bash
-npm run staff:add -- --openid OPENID --name "张三" --role field_agent
+npm run staff:add -- --phone 13800138000 --name "张三" --role field_agent
 ```
 
-测试环境如需允许所有微信账号录入，可设置 `STAFF_AUTO_PROVISION=true`。首次登录会自动创建
-`field_agent` 账号；正式发布前应恢复为 `false`，重新启用白名单。
+白名单人员可在管理后台启用或停用；停用时会同时清除其现有登录会话。
 
 商家录入支持 1–5 张商家图片、最多 10 位负责人和选填的资质证明图片。图片通过
 生产/测试环境配置 `OSS_BUCKET` 后，小程序先调用

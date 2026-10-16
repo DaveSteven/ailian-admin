@@ -20,11 +20,46 @@ export const chatRoleEnum = pgEnum('chat_role', ['user', 'assistant', 'system'])
 export const merchantReviewStatusEnum = pgEnum('merchant_review_status', ['pending', 'approved', 'rejected']);
 export const staffRoleEnum = pgEnum('staff_role', ['field_agent', 'reviewer', 'admin']);
 
+export const appUsers = pgTable(
+  'app_users',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    openId: varchar('open_id', { length: 128 }).notNull(),
+    unionId: varchar('union_id', { length: 128 }),
+    nickname: varchar('nickname', { length: 80 }).notNull().default('微信用户'),
+    avatarUrl: text('avatar_url'),
+    phone: varchar('phone', { length: 32 }),
+    active: boolean('active').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    lastLoginAt: timestamp('last_login_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    openIdIdx: uniqueIndex('app_users_open_id_idx').on(table.openId),
+    phoneIdx: uniqueIndex('app_users_phone_idx').on(table.phone),
+  }),
+);
+
+export const appUserSessions = pgTable(
+  'app_user_sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    appUserId: uuid('app_user_id').notNull().references(() => appUsers.id, { onDelete: 'cascade' }),
+    tokenHash: varchar('token_hash', { length: 64 }).notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    tokenIdx: uniqueIndex('app_user_sessions_token_hash_idx').on(table.tokenHash),
+    userIdx: index('app_user_sessions_user_idx').on(table.appUserId),
+  }),
+);
+
 export const staffUsers = pgTable(
   'staff_users',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    openId: varchar('open_id', { length: 128 }).notNull(),
+    openId: varchar('open_id', { length: 128 }),
     name: varchar('name', { length: 80 }).notNull(),
     phone: varchar('phone', { length: 32 }),
     role: staffRoleEnum('role').notNull().default('field_agent'),
@@ -34,6 +69,7 @@ export const staffUsers = pgTable(
   },
   (table) => ({
     openIdIdx: uniqueIndex('staff_users_open_id_idx').on(table.openId),
+    phoneIdx: uniqueIndex('staff_users_phone_idx').on(table.phone),
   }),
 );
 

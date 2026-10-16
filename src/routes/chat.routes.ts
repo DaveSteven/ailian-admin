@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { handleChatMessage } from '../modules/chat/chat.service.js';
 import { AppError } from '../plugins/error-handler.js';
+import { requireUser } from '../modules/auth/user-auth.service.js';
 
 type ChatMessageBody = {
   message?: string;
@@ -13,6 +14,7 @@ type ChatMessageBody = {
 
 export async function registerChatRoutes(app: FastifyInstance) {
   app.post<{ Body: ChatMessageBody }>('/message', async (request) => {
+    await requireUser(request);
     const message = request.body.message?.trim();
 
     if (!message) {

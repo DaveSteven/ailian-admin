@@ -11,13 +11,18 @@ type WechatSessionResponse = {
   errmsg?: string;
 };
 
+type WechatAccessTokenResponse = { access_token?: string; expires_in?: number; errcode?: number; errmsg?: string };
+type WechatPhoneResponse = { errcode?: number; errmsg?: string; phone_info?: { purePhoneNumber?: string } };
+
+let accessTokenCache: { value: string; expiresAt: number } | null = null;
+
 export type StaffIdentity = {
   id: string;
   name: string;
   role: 'field_agent' | 'reviewer' | 'admin';
 };
 
-export async function loginStaffWithWechat(code: string) {
+export async function loginStaffWithWechat(code: string, phoneCode: string) {
   if (!env.WECHAT_APP_ID || !env.WECHAT_APP_SECRET) {
     throw new AppError(503, 'WECHAT_NOT_CONFIGURED', '服务端尚未配置微信登录。');
   }
@@ -51,20 +56,47 @@ export async function loginStaffWithWechat(code: string) {
   );
   let staff = staffResult.rows[0];
 
-  // 内测阶段不校验地推人员白名单，微信登录成功后自动启用账号。
-  if (!staff || !staff.active) {
-    const provisioned = await pool.query<StaffIdentity & { active: boolean }>(
-      `
-        INSERT INTO staff_users (open_id, name, role, active)
-        VALUES ($1, '测试地推人员', 'field_agent', true)
-        ON CONFLICT (open_id) DO UPDATE SET active = true, updated_at = now()
-        RETURNING id, name, role, active
-      `,
-      [wechatResponse.openid],
+  if (!staff) {
+    if (!phoneCode || phoneCode.length > 200) {
+      throw new AppError(401, 'PHONE_AUTH_REQUIRED', '请授权手机号以验证地推人员身份。');
+    }
+    const phone = await getWechatPhone(phoneCode);
+    const whitelistResult = await pool.query<StaffIdentity & { active: boolean }>(
+      `UPDATE staff_users
+       SET open_id = $1, updated_at = now()
+       WHERE phone = $2 AND active = true AND (open_id IS NULL OR open_id = $1)
+       RETURNING id, name, role, active`,
+      [wechatResponse.openid, phone],
     );
-    staff = provisioned.rows[0];
+    staff = whitelistResult.rows[0];
   }
 
+  if (!staff || !staff.active) {
+    throw new AppError(403, 'STAFF_NOT_WHITELISTED', '该手机号不在地推白名单中，请联系管理员。');
+  }
+
+  return createStaffSession(staff);
+}
+
+export async function bindStaffWithPhone(openId: string, phoneCode: string) {
+  if (!phoneCode || phoneCode.length > 200) return null;
+  const phone = await getWechatPhone(phoneCode);
+  return bindStaffWithPhoneNumber(openId, phone);
+}
+
+export async function bindStaffWithPhoneNumber(openId: string, phone: string) {
+  const result = await pool.query<StaffIdentity & { active: boolean }>(
+    `UPDATE staff_users
+     SET open_id = $1, updated_at = now()
+     WHERE phone = $2 AND active = true AND (open_id IS NULL OR open_id = $1)
+     RETURNING id, name, role, active`,
+    [openId, phone],
+  );
+  const staff = result.rows[0];
+  return staff ? createStaffSession(staff) : null;
+}
+
+async function createStaffSession(staff: StaffIdentity) {
   const token = randomBytes(32).toString('base64url');
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + env.STAFF_SESSION_DAYS * 24 * 60 * 60 * 1000);
@@ -79,6 +111,36 @@ export async function loginStaffWithWechat(code: string) {
     expiresAt,
     staff: { id: staff.id, name: staff.name, role: staff.role },
   };
+}
+
+export async function getWechatPhone(code: string) {
+  const accessToken = await getWechatAccessToken();
+  const response = await fetch(`https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=${encodeURIComponent(accessToken)}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ code }),
+  });
+  const body = (await response.json()) as WechatPhoneResponse;
+  const phone = body.phone_info?.purePhoneNumber;
+  if (!response.ok || body.errcode || !phone) {
+    throw new AppError(401, 'WECHAT_PHONE_FAILED', '手机号授权失败，请重新授权。');
+  }
+  return phone.replace(/^\+?86/, '');
+}
+
+async function getWechatAccessToken() {
+  if (accessTokenCache && accessTokenCache.expiresAt > Date.now()) return accessTokenCache.value;
+  const url = new URL('https://api.weixin.qq.com/cgi-bin/token');
+  url.searchParams.set('grant_type', 'client_credential');
+  url.searchParams.set('appid', env.WECHAT_APP_ID);
+  url.searchParams.set('secret', env.WECHAT_APP_SECRET);
+  const response = await fetch(url);
+  const body = (await response.json()) as WechatAccessTokenResponse;
+  if (!response.ok || !body.access_token) {
+    throw new AppError(502, 'WECHAT_ACCESS_TOKEN_FAILED', '暂时无法连接微信授权服务。');
+  }
+  accessTokenCache = { value: body.access_token, expiresAt: Date.now() + Math.max(60, (body.expires_in ?? 7200) - 300) * 1000 };
+  return accessTokenCache.value;
 }
 
 export async function requireStaff(request: FastifyRequest): Promise<StaffIdentity> {
